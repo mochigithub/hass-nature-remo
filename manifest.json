@@ -4,7 +4,11 @@
   "version": "0.5",
   "documentation": "https://github.com/yutoyazaki/hass-nature-remo",
   "issue_tracker": "https://github.com/yutoyazaki/hass-nature-remo/issues",
+  "dependencies": [
+    "http"
+  ],
   "codeowners": [
     "@yutoyazaki"
-  ]
+  ],
+  "iot_class": "cloud_polling"
 }
