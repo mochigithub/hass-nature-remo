@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 import logging
 from typing import Callable
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpdateCoordinator
 
 from homeassistant.const import (
     DEVICE_CLASS_HUMIDITY,
@@ -62,6 +63,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     check_update(entry, async_add_entities, devices, on_add_device)
     check_update(entry, async_add_entities, appliances, on_add_appliances)
+
+    async_add_entities([RateLimitEntity(devices.rate_limit)])
+
+class RateLimitEntity(CoordinatorEntity, SensorEntity):
+    _attr_entity_registry_enabled_default = False
+    _attr_icon = "mdi:api"
+    _attr_name = "Nature Remo Rate Limit"
+    _attr_state_class = STATE_CLASS_MEASUREMENT
+    _attr_unique_id = "rate-limit-remaining"
+
+    def __init__(self, coordinator: DataUpdateCoordinator):
+        super().__init__(coordinator)
+        self._attr_native_value = self.coordinator.data["remaining"]
+
+    def _handle_coordinator_update(self):
+        self._attr_native_value = self.coordinator.data["remaining"]
+        return super()._handle_coordinator_update()
 
 class RemoSensorValEntity(RemoSensorEntity, SensorEntity):
     _attr_state_class = STATE_CLASS_MEASUREMENT
