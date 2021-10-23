@@ -4,8 +4,6 @@ import logging
 from homeassistant.core import callback
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
-    DEFAULT_MAX_TEMP,
-    DEFAULT_MIN_TEMP,
     HVAC_MODE_AUTO,
     HVAC_MODE_COOL,
     HVAC_MODE_DRY,
@@ -17,7 +15,7 @@ from homeassistant.components.climate.const import (
     SUPPORT_TARGET_TEMPERATURE,
 )
 from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
-from . import DOMAIN, CONF_COOL_TEMP, CONF_HEAT_TEMP, NatureRemoBase
+from .common import CONF_COOL_TEMP, CONF_HEAT_TEMP, DOMAIN, NatureRemoBase
 
 _LOGGER = logging.getLogger(__name__)
 

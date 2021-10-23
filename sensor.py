@@ -2,12 +2,10 @@
 import logging
 
 from homeassistant.const import (
-    CONF_ACCESS_TOKEN,
-    ENERGY_KILO_WATT_HOUR,
     POWER_WATT,
     DEVICE_CLASS_POWER,
 )
-from . import DOMAIN, NatureRemoBase
+from .common import DOMAIN, NatureRemoBase
 
 _LOGGER = logging.getLogger(__name__)
 
