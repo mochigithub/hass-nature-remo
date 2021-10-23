@@ -5,14 +5,20 @@ from typing import Callable
 from homeassistant.config_entries import ConfigEntry
 
 from homeassistant.const import (
+    DEVICE_CLASS_HUMIDITY,
+    DEVICE_CLASS_ILLUMINANCE,
+    DEVICE_CLASS_TEMPERATURE,
+    LIGHT_LUX,
+    PERCENTAGE,
     POWER_WATT,
     DEVICE_CLASS_POWER,
+    TEMP_CELSIUS,
 )
 from homeassistant.components.sensor import STATE_CLASS_MEASUREMENT, SensorEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 
-from .common import DOMAIN, AppliancesUpdateCoordinator, NatureEntity, check_update, create_appliance_device_info, modify_utc_z
+from .common import DOMAIN, AppliancesUpdateCoordinator, NatureEntity, NatureUpdateCoordinator, RemoSensorEntity, check_update, create_appliance_device_info, create_device_device_info, modify_utc_z
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,15 +26,39 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: Callable):
     """Set up the Nature Remo E sensor."""
     _LOGGER.debug("Setting up sensor platform.")
+    devices: NatureUpdateCoordinator = hass.data[DOMAIN]["devices"]
     appliances: AppliancesUpdateCoordinator = hass.data[DOMAIN]["appliances"]
 
+    def on_add_device(device):
+        device_info = create_device_device_info(device)
+        newest_events = device['newest_events']
+        if 'te' in newest_events:
+            yield RemoSensorValEntity(devices, device, device_info, 'te', DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS)
+        if 'hu' in newest_events:
+            yield RemoSensorValEntity(devices, device, device_info, 'hu', DEVICE_CLASS_HUMIDITY, PERCENTAGE)
+        if 'il' in newest_events:
+            yield RemoSensorValEntity(devices, device, device_info, 'il', DEVICE_CLASS_ILLUMINANCE, LIGHT_LUX)
     def on_add_appliances(appliance):
         if appliance["type"] != "EL_SMART_METER":
             return
         device_info = create_appliance_device_info(appliance)
         yield PowerEntity(appliances, appliance, device_info)
 
+    check_update(entry, async_add_entities, devices, on_add_device)
     check_update(entry, async_add_entities, appliances, on_add_appliances)
+
+class RemoSensorValEntity(RemoSensorEntity, SensorEntity):
+    _attr_state_class = STATE_CLASS_MEASUREMENT
+
+    def __init__(self, coordinator: NatureUpdateCoordinator, device: dict, device_info: DeviceInfo, key: str, device_class: str, unit_of_measurement: str):
+        super().__init__(coordinator, device, device_info, key)
+        self._attr_device_class = device_class
+        self._attr_device_info = device_info
+        self._attr_native_unit_of_measurement = unit_of_measurement
+
+    def _on_data_update(self, device: dict):
+        super()._on_data_update(device)
+        self._attr_native_value = device["newest_events"][self._key]["val"]
 
 class SmartMeterEntity(NatureEntity, SensorEntity):
     coordinator: AppliancesUpdateCoordinator

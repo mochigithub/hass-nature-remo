@@ -135,6 +135,20 @@ class NatureEntity(CoordinatorEntity):
     def _on_data_update(self, data: dict):
         pass
 
+class RemoSensorEntity(NatureEntity):
+    def __init__(self, coordinator: NatureUpdateCoordinator, device: dict, device_info: DeviceInfo, key: str):
+        super().__init__(coordinator, device['id'], f"{device['id']}-{key}", device_info)
+        self._attr_name = f"{device['name']} {key}"
+        self._key = key
+        self._on_data_update(device)
+
+    def _on_data_update(self, device: dict):
+        newest_events = device['newest_events']
+        self._attr_extra_state_attributes = {
+            "created_at": modify_utc_z(newest_events[self._key]["created_at"]),
+        }
+        return super()._on_data_update(device)
+
 def create_appliance_device_info(appliance: dict):
     info = DeviceInfo(
         identifiers={(DOMAIN, appliance["id"])},
