@@ -1,0 +1,20 @@
+{
+    "title": "Nature Remo",
+    "config": {
+        "step": {
+            "user": {
+                "description": "https://home.nature.global/home で作成したアクセストークンを以下に入力してください",
+                "data": {
+                    "access_token": "アクセストークン"
+                }
+            }
+        },
+        "error": {
+            "code_401": "アクセストークンが正しくありません",
+            "code_429": "API制限に達しました。数分待って再試行してください"
+        },
+        "abort": {
+            "reauth_successful": "アクセストークンを更新しました。"
+        }
+    }
+}

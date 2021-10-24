@@ -56,9 +56,4 @@ git submodule add https://github.com/yutoyazaki/hass-nature-remo.git {path_to_cu
 
 1. Go to https://home.nature.global and sign in/up
 1. Generate access token
-1. Add following codes to your `configuration.yaml` file
-
-```yaml
-nature_remo:
-  access_token: YOUR_ACCESS_TOKEN
-```
+1. [Add integration](https://my.home-assistant.io/redirect/config_flow_start?domain=nature_remo)

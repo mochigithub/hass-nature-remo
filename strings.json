@@ -1,0 +1,15 @@
+{
+    "title": "Nature Remo",
+    "config": {
+        "step": {
+            "user": {
+                "data": {
+                    "access_token": "[%key:common::config_flow::data::access_token%]"
+                }
+            }
+        },
+        "abort": {
+            "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
+        }
+    }
+}

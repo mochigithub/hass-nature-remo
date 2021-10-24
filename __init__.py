@@ -1,88 +1,80 @@
 """The Nature Remo integration."""
 import logging
-import voluptuous as vol
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 
-from datetime import timedelta
-from homeassistant.helpers import config_validation as cv, discovery
+from datetime import datetime
+from homeassistant.helpers import device_registry
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.const import CONF_ACCESS_TOKEN
 
-from .common import CONF_COOL_TEMP, CONF_HEAT_TEMP, DOMAIN
+from .common import DOMAIN, RESOURCE, AppliancesUpdateCoordinator, NatureUpdateCoordinator, create_appliance_device_info, create_device_device_info
 
 _LOGGER = logging.getLogger(__name__)
-_RESOURCE = "https://api.nature.global/1/"
 
-DEFAULT_COOL_TEMP = 28
-DEFAULT_HEAT_TEMP = 20
-DEFAULT_UPDATE_INTERVAL = timedelta(seconds=60)
+PLATFORMS = ["sensor", "climate"]
 
-CONFIG_SCHEMA = vol.Schema(
-    {
-        DOMAIN: vol.Schema(
-            {
-                vol.Required(CONF_ACCESS_TOKEN): cv.string,
-                vol.Optional(CONF_COOL_TEMP, default=DEFAULT_COOL_TEMP): vol.Coerce(
-                    int
-                ),
-                vol.Optional(CONF_HEAT_TEMP, default=DEFAULT_HEAT_TEMP): vol.Coerce(
-                    int
-                ),
-            }
-        )
-    },
-    extra=vol.ALLOW_EXTRA,
-)
-
-
-async def async_setup(hass, config):
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up Nature Remo component."""
     _LOGGER.debug("Setting up Nature Remo component.")
-    access_token = config[DOMAIN][CONF_ACCESS_TOKEN]
     session = async_get_clientsession(hass)
-    api = NatureRemoAPI(access_token, session)
-    coordinator = hass.data[DOMAIN] = DataUpdateCoordinator(
-        hass,
-        _LOGGER,
-        name="Nature Remo update",
-        update_method=api.get,
-        update_interval=DEFAULT_UPDATE_INTERVAL,
-    )
-    await coordinator.async_refresh()
-    hass.data[DOMAIN] = {
-        "api": api,
-        "coordinator": coordinator,
-        "config": config[DOMAIN],
-    }
+    dr = device_registry.async_get(hass)
+    hass.data[DOMAIN] = {}
 
-    await discovery.async_load_platform(hass, "sensor", DOMAIN, {}, config)
-    await discovery.async_load_platform(hass, "climate", DOMAIN, {}, config)
+    rate_limit = DataUpdateCoordinator(hass, _LOGGER, name="Nature Remo rate limit")
+    devices = NatureUpdateCoordinator(hass, _LOGGER, entry, session, rate_limit, "devices")
+    appliances = AppliancesUpdateCoordinator(hass, _LOGGER, entry, session, rate_limit)
+
+    def update_device_info():
+        if not devices.last_update_success:
+            return
+        for device in devices.data.values():
+            dr.async_get_or_create(
+                config_entry_id=entry.entry_id,
+                **create_device_device_info(device),
+            )
+    def update_appliance_info():
+        if not appliances.last_update_success:
+            return
+        for appliance in appliances.data.values():
+            dr.async_get_or_create(
+                config_entry_id=entry.entry_id,
+                **create_appliance_device_info(appliance),
+            )
+
+    await devices.async_config_entry_first_refresh()
+    await appliances.async_config_entry_first_refresh()
+    update_device_info()
+    update_appliance_info()
+    entry.async_on_unload(devices.async_add_listener(update_device_info))
+    entry.async_on_unload(appliances.async_add_listener(update_appliance_info))
+
+    async def post(path: str, data = None):
+        _LOGGER.debug("Trying to request post:%s, data:%s", path, data)
+        access_token = entry.data[CONF_ACCESS_TOKEN]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        response = await session.post(
+            f"{RESOURCE}/{path}", data=data, headers=headers
+        )
+        if response.status == 401:
+            raise ConfigEntryAuthFailed()
+        if "x-rate-limit-remaining" in response.headers:
+            remaining = int(response.headers.get("x-rate-limit-remaining"))
+            reset = datetime.fromtimestamp(int(response.headers.get("x-rate-limit-reset")))
+            rate_limit.async_set_updated_data({"remaining":remaining, "reset":reset})
+        if response.status != 200:
+            raise UpdateFailed(f"status code: {response.status}")
+        return await response.json()
+
+    hass.data[DOMAIN]["devices"] = devices
+    hass.data[DOMAIN]["appliances"] = appliances
+    hass.data[DOMAIN]["post"] = post
+
+    hass.config_entries.async_setup_platforms(entry, PLATFORMS)
     return True
 
-
-class NatureRemoAPI:
-    """Nature Remo API client"""
-
-    def __init__(self, access_token, session):
-        """Init API client"""
-        self._access_token = access_token
-        self._session = session
-
-    async def get(self):
-        """Get appliance and device list"""
-        _LOGGER.debug("Trying to fetch appliance and device list from API.")
-        headers = {"Authorization": f"Bearer {self._access_token}"}
-        response = await self._session.get(f"{_RESOURCE}/appliances", headers=headers)
-        appliances = {x["id"]: x for x in await response.json()}
-        response = await self._session.get(f"{_RESOURCE}/devices", headers=headers)
-        devices = {x["id"]: x for x in await response.json()}
-        return {"appliances": appliances, "devices": devices}
-
-    async def post(self, path, data):
-        """Post any request"""
-        _LOGGER.debug("Trying to request post:%s, data:%s", path, data)
-        headers = {"Authorization": f"Bearer {self._access_token}"}
-        response = await self._session.post(
-            f"{_RESOURCE}{path}", data=data, headers=headers
-        )
-        return await response.json()
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

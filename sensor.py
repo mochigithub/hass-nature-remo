@@ -1,69 +1,69 @@
 """Support for Nature Remo E energy sensor."""
+from datetime import datetime, timedelta, timezone
 import logging
+from typing import Callable
+from homeassistant.config_entries import ConfigEntry
 
 from homeassistant.const import (
     POWER_WATT,
     DEVICE_CLASS_POWER,
 )
-from .common import DOMAIN, NatureRemoBase
+from homeassistant.components.sensor import STATE_CLASS_MEASUREMENT, SensorEntity
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import DeviceInfo
+
+from .common import DOMAIN, AppliancesUpdateCoordinator, NatureEntity, check_update, create_appliance_device_info, modify_utc_z
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: Callable):
     """Set up the Nature Remo E sensor."""
-    if discovery_info is None:
-        return
     _LOGGER.debug("Setting up sensor platform.")
-    coordinator = hass.data[DOMAIN]["coordinator"]
-    appliances = coordinator.data["appliances"]
-    async_add_entities(
-        [
-            NatureRemoE(coordinator, appliance)
-            for appliance in appliances.values()
-            if appliance["type"] == "EL_SMART_METER"
-        ]
-    )
+    appliances: AppliancesUpdateCoordinator = hass.data[DOMAIN]["appliances"]
 
+    def on_add_appliances(appliance):
+        if appliance["type"] != "EL_SMART_METER":
+            return
+        device_info = create_appliance_device_info(appliance)
+        yield PowerEntity(appliances, appliance, device_info)
 
-class NatureRemoE(NatureRemoBase):
+    check_update(entry, async_add_entities, appliances, on_add_appliances)
+
+class SmartMeterEntity(NatureEntity, SensorEntity):
+    coordinator: AppliancesUpdateCoordinator
+
+    def __init__(self, coordinator: AppliancesUpdateCoordinator, appliance: dict, device_info: DeviceInfo, key: int):
+        super().__init__(coordinator, appliance["id"], f"{appliance['id']}-{key}", device_info)
+        self._key = key
+        self._on_data_update(appliance)
+
+    def _on_data_update(self, appliance: dict):
+        super()._on_data_update(appliance)
+        echonetlite_properties = appliance["smart_meter"]["echonetlite_properties"]
+        updated_at = modify_utc_z(next(v for v in echonetlite_properties)["updated_at"])
+        self._attr_extra_state_attributes = {
+            "updated_at": updated_at,
+        }
+        updated_at = datetime.fromisoformat(updated_at)
+        if self._attr_available:
+            limit = datetime.now(timezone.utc) - timedelta(seconds=125)
+            self._attr_available = updated_at >= limit
+
+class PowerEntity(SmartMeterEntity):
     """Implementation of a Nature Remo E sensor."""
 
-    def __init__(self, coordinator, appliance):
-        super().__init__(coordinator, appliance)
-        self._unit_of_measurement = POWER_WATT
+    _attr_device_class = DEVICE_CLASS_POWER
+    _attr_native_unit_of_measurement = POWER_WATT
+    _attr_state_class = STATE_CLASS_MEASUREMENT
 
-    @property
-    def state(self):
-        """Return the state of the sensor."""
-        appliance = self._coordinator.data["appliances"][self._appliance_id]
-        smart_meter = appliance["smart_meter"]
-        echonetlite_properties = smart_meter["echonetlite_properties"]
-        measured_instantaneous = next(
+    def __init__(self, coordinator: AppliancesUpdateCoordinator, appliance: dict, device_info: DeviceInfo):
+        super().__init__(coordinator, appliance, device_info, 231)
+        self._attr_name = f"{appliance['nickname']} instantaneous"
+
+    def _on_data_update(self, appliance: dict):
+        super()._on_data_update(appliance)
+        echonetlite_properties = appliance["smart_meter"]["echonetlite_properties"]
+        self._attr_native_value = next(
             value["val"] for value in echonetlite_properties if value["epc"] == 231
         )
-        _LOGGER.debug("Current state: %sW", measured_instantaneous)
-        return measured_instantaneous
-
-    @property
-    def unit_of_measurement(self):
-        """Return the unit of measurement of this entity, if any."""
-        return self._unit_of_measurement
-
-    @property
-    def device_class(self):
-        """Return the device class."""
-        return DEVICE_CLASS_POWER
-
-    async def async_added_to_hass(self):
-        """Subscribe to updates."""
-        self.async_on_remove(
-            self._coordinator.async_add_listener(self.async_write_ha_state)
-        )
-
-    async def async_update(self):
-        """Update the entity.
-
-        Only used by the generic entity update service.
-        """
-        await self._coordinator.async_request_refresh()
