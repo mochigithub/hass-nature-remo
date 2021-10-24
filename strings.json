@@ -11,5 +11,10 @@
         "abort": {
             "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
         }
+    },
+    "device_automation": {
+        "action_type": {
+            "send_command": "[%key:common::device_actions::action_type::send_command%]"
+        }
     }
 }

@@ -16,5 +16,10 @@
         "abort": {
             "reauth_successful": "アクセストークンを更新しました。"
         }
+    },
+    "device_automation": {
+        "action_type": {
+            "send_command": "コマンド送信"
+        }
     }
 }
