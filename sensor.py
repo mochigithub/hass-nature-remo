@@ -8,19 +8,33 @@ from homeassistant.const import (
     DEVICE_CLASS_HUMIDITY,
     DEVICE_CLASS_ILLUMINANCE,
     DEVICE_CLASS_TEMPERATURE,
+    ENERGY_KILO_WATT_HOUR,
     LIGHT_LUX,
     PERCENTAGE,
     POWER_WATT,
     DEVICE_CLASS_POWER,
+    DEVICE_CLASS_ENERGY,
     TEMP_CELSIUS,
 )
-from homeassistant.components.sensor import STATE_CLASS_MEASUREMENT, SensorEntity
+from homeassistant.components.sensor import STATE_CLASS_MEASUREMENT, STATE_CLASS_TOTAL_INCREASING, SensorEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 
 from .common import DOMAIN, AppliancesUpdateCoordinator, NatureEntity, NatureUpdateCoordinator, RemoSensorEntity, check_update, create_appliance_device_info, create_device_device_info, modify_utc_z
 
 _LOGGER = logging.getLogger(__name__)
+
+_ENERGY_UNITS = {
+    0x00: 1,
+    0x01: 0.1,
+    0x02: 0.01,
+    0x03: 0.001,
+    0x04: 0.0001,
+    0x0A: 10,
+    0x0B: 100,
+    0x0C: 1000,
+    0x0D: 10000,
+}
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: Callable):
@@ -43,6 +57,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             return
         device_info = create_appliance_device_info(appliance)
         yield PowerEntity(appliances, appliance, device_info)
+        yield EnergyEntity(appliances, appliance, device_info, 224)
+        yield EnergyEntity(appliances, appliance, device_info, 227)
 
     check_update(entry, async_add_entities, devices, on_add_device)
     check_update(entry, async_add_entities, appliances, on_add_appliances)
@@ -97,3 +113,32 @@ class PowerEntity(SmartMeterEntity):
         self._attr_native_value = next(
             value["val"] for value in echonetlite_properties if value["epc"] == 231
         )
+
+class EnergyEntity(SmartMeterEntity):
+    """Implementation of a Nature Remo E sensor."""
+
+    _attr_device_class = DEVICE_CLASS_ENERGY
+    _attr_unit_of_measurement = ENERGY_KILO_WATT_HOUR
+    _attr_state_class = STATE_CLASS_TOTAL_INCREASING
+
+    def __init__(self, coordinator: AppliancesUpdateCoordinator, appliance: dict, device_info: DeviceInfo, key: int):
+        super().__init__(coordinator, appliance, device_info, key)
+        echonetlite_properties = appliance["smart_meter"]["echonetlite_properties"]
+        name = next(
+            value["name"] for value in echonetlite_properties if value["epc"] == key
+        ).split("_")[0]
+        self._attr_name = f"{appliance['nickname']} {name} cumulative"
+
+    def _on_data_update(self, appliance: dict):
+        super()._on_data_update(appliance)
+        echonetlite_properties = appliance["smart_meter"]["echonetlite_properties"]
+        cumulative_electric_energy = int(next(
+            value["val"] for value in echonetlite_properties if value["epc"] == self._key
+        ))
+        coefficient = int(next(
+            value["val"] for value in echonetlite_properties if value["epc"] == 211
+        ))
+        cumulative_electric_energy_unit = int(next(
+            value["val"] for value in echonetlite_properties if value["epc"] == 225
+        ))
+        self._attr_native_value = cumulative_electric_energy * coefficient * _ENERGY_UNITS[cumulative_electric_energy_unit]

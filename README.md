@@ -17,13 +17,14 @@ Yet another [Home Assistant](https://www.home-assistant.io) component for [Natur
   - [x] Remember previous target temperatures when switching modes back and forth
 - [x] Energy Sensor (Nature Remo E/E Lite)
   - [x] Fetch current power usage
+  - [x] Fetch total energy usage
 - [ ] Switch
 - [ ] Light
 - [ ] TV
 - [x] Others
   - [x] Fetch sensor data
 
-Tested on Home Assistant Core 2021.3.3 on Docker
+Tested on Home Assistant Core 2021.10.5 on Docker
 
 ## Installation
 
