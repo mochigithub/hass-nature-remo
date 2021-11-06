@@ -10,6 +10,7 @@ from homeassistant.const import (
     DEVICE_CLASS_ILLUMINANCE,
     DEVICE_CLASS_TEMPERATURE,
     ENERGY_KILO_WATT_HOUR,
+    ENTITY_CATEGORY_DIAGNOSTIC,
     LIGHT_LUX,
     PERCENTAGE,
     POWER_WATT,
@@ -67,6 +68,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     async_add_entities([RateLimitEntity(devices.rate_limit)])
 
 class RateLimitEntity(CoordinatorEntity, SensorEntity):
+    _attr_entity_category = ENTITY_CATEGORY_DIAGNOSTIC
     _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:api"
     _attr_name = "Nature Remo Rate Limit"
