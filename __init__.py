@@ -72,6 +72,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data[DOMAIN]["appliances"] = appliances
     hass.data[DOMAIN]["post"] = post
 
+    for d in list(dr.devices.values()):
+        id = next((x[1] for x in d.identifiers if x[0] == DOMAIN), None)
+        if (id is not None) and (id not in devices.data.keys()) and (id not in appliances.data.keys()):
+            dr.async_remove_device(d.id)
+
     hass.config_entries.async_setup_platforms(entry, PLATFORMS)
     return True
 
