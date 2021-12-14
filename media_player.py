@@ -17,6 +17,7 @@ _INPUT_TO_SOURCE = {
     "cs": "cs",
 }
 
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities):
     _LOGGER.debug("Setting up media_player platform.")
     appliances: AppliancesUpdateCoordinator = hass.data[DOMAIN]["appliances"]
@@ -30,13 +31,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     check_update(entry, async_add_entities, appliances, on_add)
 
+
 class NatureRemoTV(NatureEntity, MediaPlayerEntity):
     _attr_assumed_state = True
     _attr_device_class = DEVICE_CLASS_TV
     _attr_state = STATE_OFF
 
     def __init__(self, appliances: AppliancesUpdateCoordinator, post: Callable, appliance: dict, device_info: DeviceInfo):
-        super().__init__(appliances, appliance["id"], f'{appliance["id"]}-tv', device_info)
+        super().__init__(appliances,
+                         appliance["id"], f'{appliance["id"]}-tv', device_info)
         self._attr_name = appliance["nickname"]
         self._post = post
         self._attr_icon = "mdi:television"
@@ -114,7 +117,8 @@ class NatureRemoTV(NatureEntity, MediaPlayerEntity):
         if "power" in buttons:
             features |= SUPPORT_TURN_ON | SUPPORT_TURN_OFF
         for x in buttons:
-            if not x.startswith("input-"): continue
+            if not x.startswith("input-"):
+                continue
             self._attr_source_list.append(x[6:])
             features |= SUPPORT_SELECT_SOURCE
         if "mute" in buttons:

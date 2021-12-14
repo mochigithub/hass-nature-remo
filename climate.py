@@ -80,7 +80,8 @@ class AirconEntity(NatureEntity, ClimateEntity):
     _updated_at: str = None
 
     def __init__(self, appliances: AppliancesUpdateCoordinator, devices: NatureUpdateCoordinator, post: Callable, appliance: dict, device_info: DeviceInfo):
-        super().__init__(appliances, appliance["id"], appliance["id"], device_info)
+        super().__init__(appliances,
+                         appliance["id"], appliance["id"], device_info)
         self._attr_name: str = appliance['nickname']
         self.devices = devices
         self._device_id: str = appliance["device"]["id"]
@@ -94,7 +95,8 @@ class AirconEntity(NatureEntity, ClimateEntity):
         }
         self._modes: dict = appliance["aircon"]["range"]["modes"]
         self._remo_mode = None
-        self.async_on_remove(devices.async_add_listener(self._on_device_update))
+        self.async_on_remove(
+            devices.async_add_listener(self._on_device_update))
         self._on_data_update(appliance)
         self._on_device_update()
 
@@ -151,7 +153,7 @@ class AirconEntity(NatureEntity, ClimateEntity):
             "updated_at": self._updated_at
         }
 
-    def set_temperature(self, temperature = None, hvac_mode = None, **kwargs):
+    def set_temperature(self, temperature=None, hvac_mode=None, **kwargs):
         data = {}
         if hvac_mode is not None:
             _LOGGER.debug("Set hvac mode: %s", hvac_mode)
@@ -213,7 +215,8 @@ class AirconEntity(NatureEntity, ClimateEntity):
     def _on_device_update(self):
         if not self.devices.last_update_success:
             return
-        device: dict[str, dict[str, dict[str, str]]] = self.devices.data[self._device_id]
+        device: dict[str, dict[str, dict[str, str]]
+                     ] = self.devices.data[self._device_id]
         newest_events = device["newest_events"]
         self._attr_current_temperature = float(newest_events["te"]["val"])
         self._attr_current_humidity = int(newest_events["hu"]["val"])
@@ -225,7 +228,8 @@ class AirconEntity(NatureEntity, ClimateEntity):
             self._next_settings.update(data)
         if self._post_cancel is not None:
             self._post_cancel()
-        self._post_cancel = async_call_later(self.hass, timedelta(milliseconds=500), self._on_post)
+        self._post_cancel = async_call_later(
+            self.hass, timedelta(milliseconds=100), self._on_post)
 
     async def _on_post(self, *_):
         self._post_cancel = None

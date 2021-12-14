@@ -54,6 +54,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             yield RemoSensorValEntity(devices, device, device_info, 'hu', DEVICE_CLASS_HUMIDITY, PERCENTAGE)
         if 'il' in newest_events:
             yield RemoSensorValEntity(devices, device, device_info, 'il', DEVICE_CLASS_ILLUMINANCE, LIGHT_LUX)
+
     def on_add_appliances(appliance):
         if appliance["type"] != "EL_SMART_METER":
             return
@@ -66,6 +67,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     check_update(entry, async_add_entities, appliances, on_add_appliances)
 
     async_add_entities([RateLimitEntity(devices.rate_limit)])
+
 
 class RateLimitEntity(CoordinatorEntity, SensorEntity):
     _attr_entity_category = ENTITY_CATEGORY_DIAGNOSTIC
@@ -83,6 +85,7 @@ class RateLimitEntity(CoordinatorEntity, SensorEntity):
         self._attr_native_value = self.coordinator.data["remaining"]
         return super()._handle_coordinator_update()
 
+
 class RemoSensorValEntity(RemoSensorEntity, SensorEntity):
     _attr_state_class = STATE_CLASS_MEASUREMENT
 
@@ -96,18 +99,21 @@ class RemoSensorValEntity(RemoSensorEntity, SensorEntity):
         super()._on_data_update(device)
         self._attr_native_value = device["newest_events"][self._key]["val"]
 
+
 class SmartMeterEntity(NatureEntity, SensorEntity):
     coordinator: AppliancesUpdateCoordinator
 
     def __init__(self, coordinator: AppliancesUpdateCoordinator, appliance: dict, device_info: DeviceInfo, key: int):
-        super().__init__(coordinator, appliance["id"], f"{appliance['id']}-{key}", device_info)
+        super().__init__(coordinator,
+                         appliance["id"], f"{appliance['id']}-{key}", device_info)
         self._key = key
         self._on_data_update(appliance)
 
     def _on_data_update(self, appliance: dict):
         super()._on_data_update(appliance)
         echonetlite_properties = appliance["smart_meter"]["echonetlite_properties"]
-        updated_at = modify_utc_z(next(v for v in echonetlite_properties)["updated_at"])
+        updated_at = modify_utc_z(
+            next(v for v in echonetlite_properties)["updated_at"])
         self._attr_extra_state_attributes = {
             "updated_at": updated_at,
         }
@@ -115,6 +121,7 @@ class SmartMeterEntity(NatureEntity, SensorEntity):
         if self._attr_available:
             limit = datetime.now(timezone.utc) - timedelta(seconds=125)
             self._attr_available = updated_at >= limit
+
 
 class PowerEntity(SmartMeterEntity):
     """Implementation of a Nature Remo E sensor."""
@@ -133,6 +140,7 @@ class PowerEntity(SmartMeterEntity):
         self._attr_native_value = next(
             value["val"] for value in echonetlite_properties if value["epc"] == 231
         )
+
 
 class EnergyEntity(SmartMeterEntity):
     """Implementation of a Nature Remo E sensor."""
@@ -161,4 +169,5 @@ class EnergyEntity(SmartMeterEntity):
         cumulative_electric_energy_unit = int(next(
             value["val"] for value in echonetlite_properties if value["epc"] == 225
         ))
-        self._attr_native_value = cumulative_electric_energy * coefficient * _ENERGY_UNITS[cumulative_electric_energy_unit]
+        self._attr_native_value = cumulative_electric_energy * \
+            coefficient * _ENERGY_UNITS[cumulative_electric_energy_unit]

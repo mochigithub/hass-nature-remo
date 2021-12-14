@@ -22,6 +22,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     check_update(entry, async_add_entities, devices, on_add)
 
+
 class RemoMotionEntity(RemoSensorEntity, BinarySensorEntity):
     _attr_device_class = DEVICE_CLASS_MOTION
 

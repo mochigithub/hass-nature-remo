@@ -38,8 +38,10 @@ class NatureUpdateCoordinator(DataUpdateCoordinator[dict[str, dict]]):
             raise ConfigEntryAuthFailed()
         if "x-rate-limit-remaining" in response.headers:
             remaining = int(response.headers.get("x-rate-limit-remaining"))
-            reset = datetime.fromtimestamp(int(response.headers.get("x-rate-limit-reset")))
-            self.rate_limit.async_set_updated_data({"remaining":remaining, "reset":reset})
+            reset = datetime.fromtimestamp(
+                int(response.headers.get("x-rate-limit-reset")))
+            self.rate_limit.async_set_updated_data(
+                {"remaining": remaining, "reset": reset})
             if response.status == 429:
                 self._schedule_refresh(reset + timedelta(seconds=1))
         if response.status != 200:
@@ -85,6 +87,7 @@ class NatureUpdateCoordinator(DataUpdateCoordinator[dict[str, dict]]):
             time,
         )
 
+
 class AppliancesUpdateCoordinator(NatureUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, logger: logging.Logger, entry: ConfigEntry, session: ClientSession, rate_limit: DataUpdateCoordinator) -> None:
         super().__init__(
@@ -94,8 +97,8 @@ class AppliancesUpdateCoordinator(NatureUpdateCoordinator):
     def _get_next_update(self, appliances):
         val = max(
             (str_to_datetime(x["smart_meter"]["echonetlite_properties"][0]["updated_at"])
-            for x in appliances
-            if "smart_meter" in x),
+             for x in appliances
+             if "smart_meter" in x),
             default=None,
         )
         if val is not None:
@@ -109,6 +112,7 @@ class AppliancesUpdateCoordinator(NatureUpdateCoordinator):
                 return retry
             return val
         return super()._get_next_update(appliances)
+
 
 class NatureEntity(CoordinatorEntity):
     coordinator: NatureUpdateCoordinator
@@ -135,9 +139,11 @@ class NatureEntity(CoordinatorEntity):
     def _on_data_update(self, data: dict):
         pass
 
+
 class RemoSensorEntity(NatureEntity):
     def __init__(self, coordinator: NatureUpdateCoordinator, device: dict, device_info: DeviceInfo, key: str):
-        super().__init__(coordinator, device['id'], f"{device['id']}-{key}", device_info)
+        super().__init__(coordinator,
+                         device['id'], f"{device['id']}-{key}", device_info)
         self._attr_name = f"{device['name']} {key}"
         self._key = key
         self._on_data_update(device)
@@ -148,6 +154,7 @@ class RemoSensorEntity(NatureEntity):
             "created_at": modify_utc_z(newest_events[self._key]["created_at"]),
         }
         return super()._on_data_update(device)
+
 
 def create_appliance_device_info(appliance: dict):
     info = DeviceInfo(
@@ -161,6 +168,7 @@ def create_appliance_device_info(appliance: dict):
         info["default_model"] = appliance["model"]["name"]
     return info
 
+
 def create_device_device_info(device: dict):
     return DeviceInfo(
         connections={(CONNECTION_NETWORK_MAC, device["mac_address"])},
@@ -170,6 +178,7 @@ def create_device_device_info(device: dict):
         name=device["name"],
         sw_version=device["firmware_version"],
     )
+
 
 def check_update(entry: ConfigEntry, async_add_entities: Callable, coordinator: NatureUpdateCoordinator, found: Callable[[dict], Iterable]):
     added = []
@@ -189,8 +198,10 @@ def check_update(entry: ConfigEntry, async_add_entities: Callable, coordinator: 
     entry.async_on_unload(coordinator.async_add_listener(updated))
     updated()
 
+
 def modify_utc_z(s: str):
     return s.replace('Z', '+00:00')
+
 
 def str_to_datetime(s: str):
     return datetime.fromisoformat(modify_utc_z(s))

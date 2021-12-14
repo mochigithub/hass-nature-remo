@@ -19,15 +19,6 @@ import homeassistant.helpers.config_validation as cv
 
 from .common import DOMAIN
 
-ACTION_TYPES = {
-    "arm_away",
-    "arm_home",
-    "arm_night",
-    "arm_vacation",
-    "disarm",
-    "trigger",
-}
-
 ACTION_SCHEMA = cv.DEVICE_ACTION_BASE_SCHEMA.extend(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_id,
@@ -48,7 +39,8 @@ async def async_get_actions(hass: HomeAssistant, device_id: str) -> list[dict]:
             continue
 
         state = hass.states.get(entry.entity_id)
-        if not state.attributes.get("signals") and not state.attributes.get("buttons"): continue
+        if not state.attributes.get("signals") and not state.attributes.get("buttons"):
+            continue
 
         actions.append({
             CONF_TYPE: "send_command",

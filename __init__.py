@@ -16,6 +16,7 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = ["sensor", "climate", "binary_sensor", "remote", "media_player"]
 
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up Nature Remo component."""
     _LOGGER.debug("Setting up Nature Remo component.")
@@ -23,9 +24,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     dr = device_registry.async_get(hass)
     hass.data[DOMAIN] = {}
 
-    rate_limit = DataUpdateCoordinator(hass, _LOGGER, name="Nature Remo rate limit")
-    devices = NatureUpdateCoordinator(hass, _LOGGER, entry, session, rate_limit, "devices")
-    appliances = AppliancesUpdateCoordinator(hass, _LOGGER, entry, session, rate_limit)
+    rate_limit = DataUpdateCoordinator(
+        hass, _LOGGER, name="Nature Remo rate limit")
+    devices = NatureUpdateCoordinator(
+        hass, _LOGGER, entry, session, rate_limit, "devices")
+    appliances = AppliancesUpdateCoordinator(
+        hass, _LOGGER, entry, session, rate_limit)
 
     def update_device_info():
         if not devices.last_update_success:
@@ -35,6 +39,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                 config_entry_id=entry.entry_id,
                 **create_device_device_info(device),
             )
+
     def update_appliance_info():
         if not appliances.last_update_success:
             return
@@ -51,7 +56,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     entry.async_on_unload(devices.async_add_listener(update_device_info))
     entry.async_on_unload(appliances.async_add_listener(update_appliance_info))
 
-    async def post(path: str, data = None):
+    async def post(path: str, data=None):
         _LOGGER.debug("Trying to request post:%s, data:%s", path, data)
         access_token = entry.data[CONF_ACCESS_TOKEN]
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -62,8 +67,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             raise ConfigEntryAuthFailed()
         if "x-rate-limit-remaining" in response.headers:
             remaining = int(response.headers.get("x-rate-limit-remaining"))
-            reset = datetime.fromtimestamp(int(response.headers.get("x-rate-limit-reset")))
-            rate_limit.async_set_updated_data({"remaining":remaining, "reset":reset})
+            reset = datetime.fromtimestamp(
+                int(response.headers.get("x-rate-limit-reset")))
+            rate_limit.async_set_updated_data(
+                {"remaining": remaining, "reset": reset})
         if response.status != 200:
             raise UpdateFailed(f"status code: {response.status}")
         return await response.json()
@@ -79,6 +86,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     hass.config_entries.async_setup_platforms(entry, PLATFORMS)
     return True
+
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""

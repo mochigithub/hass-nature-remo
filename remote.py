@@ -14,6 +14,7 @@ _ACTIVITY_FILTER = [
     "night",
 ]
 
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities):
     _LOGGER.debug("Setting up remote platform.")
     appliances: AppliancesUpdateCoordinator = hass.data[DOMAIN]["appliances"]
@@ -27,15 +28,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     check_update(entry, async_add_entities, appliances, on_add)
 
+
 class NatureRemoIR(NatureEntity, RemoteEntity):
     _attr_assumed_state = True
     _attr_is_on = None
     _attr_supported_features = SUPPORT_DELETE_COMMAND
     _aptype = None
 
-
     def __init__(self, appliances: AppliancesUpdateCoordinator, post: Callable, appliance: dict, device_info: DeviceInfo):
-        super().__init__(appliances, appliance["id"], appliance["id"], device_info)
+        super().__init__(appliances,
+                         appliance["id"], appliance["id"], device_info)
         self._attr_name = appliance["nickname"]
         self._post = post
         if appliance["type"] == "LIGHT":
@@ -64,8 +66,9 @@ class NatureRemoIR(NatureEntity, RemoteEntity):
                     self._on_post_response(state)
                     self.async_write_ha_state()
                 else:
-                    await self._post(f"/signals/{id}/send")
-                    image = next((v["image"] for v in signals if v["id"] == id), None)
+                    await self._post(f"signals/{id}/send")
+                    image = next((v["image"]
+                                 for v in signals if v["id"] == id), None)
                     if image == "ico_on":
                         self._attr_is_on = True
                         self.async_write_ha_state()
@@ -76,7 +79,8 @@ class NatureRemoIR(NatureEntity, RemoteEntity):
                         self._attr_is_on = not self._attr_is_on
                         self.async_write_ha_state()
             num_repeats -= 1
-            if num_repeats <= 0: break
+            if num_repeats <= 0:
+                break
             await asyncio.sleep(delay_secs)
 
     async def async_turn_off(self, activity: str = None, **kwargs):
@@ -124,7 +128,8 @@ class NatureRemoIR(NatureEntity, RemoteEntity):
         if activity:
             return await self._post(f"appliances/{self._remo_id}/{self._aptype}", {"button": activity})
         for b in names:
-            if b not in buttons: continue
+            if b not in buttons:
+                continue
             return await self._post(f"appliances/{self._remo_id}/{self._aptype}", {"button": b})
 
     def _on_data_update(self, appliance: dict):

@@ -27,9 +27,9 @@ class NatureRemoConfigFlow(ConfigFlow, domain=DOMAIN):
         headers = {"Authorization": f"Bearer {user_input[CONF_ACCESS_TOKEN]}"}
         response = await session.get(f"{RESOURCE}/users/me", headers=headers)
         if response.status == 401:
-            return self._access_token_form({"base":"code_401"}, user_input)
+            return self._access_token_form({"base": "code_401"}, user_input)
         if response.status == 429:
-            return self._access_token_form({"base":"code_429"}, user_input)
+            return self._access_token_form({"base": "code_429"}, user_input)
         if response.status != 200:
             raise ClientError(f"response status: {response.status}")
 
@@ -39,7 +39,8 @@ class NatureRemoConfigFlow(ConfigFlow, domain=DOMAIN):
 
         existing_entry = await self.async_set_unique_id(DOMAIN)
         if existing_entry:
-            self.hass.config_entries.async_update_entry(existing_entry, data=user_input)
+            self.hass.config_entries.async_update_entry(
+                existing_entry, data=user_input)
             await self.hass.config_entries.async_reload(existing_entry.entry_id)
             return self.async_abort(reason="reauth_successful")
 
