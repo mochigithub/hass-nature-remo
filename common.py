@@ -16,6 +16,31 @@ DOMAIN = "nature_remo"
 
 RESOURCE = "https://api.nature.global/1"
 
+ICONS_MAP = {
+    "ico_0": "mdi:numeric-0",
+    "ico_1": "mdi:numeric-1",
+    "ico_2": "mdi:numeric-2",
+    "ico_3": "mdi:numeric-3",
+    "ico_4": "mdi:numeric-4",
+    "ico_5": "mdi:numeric-5",
+    "ico_6": "mdi:numeric-6",
+    "ico_7": "mdi:numeric-7",
+    "ico_8": "mdi:numeric-8",
+    "ico_9": "mdi:numeric-9",
+    "ico_10": "mdi:numeric-10",
+    "ico_ac_fan": "mdi:fan",
+    "ico_arrow_bottom": "mdi:arrow-down-drop-circle",
+    "ico_arrow_top": "mdi:arrow-up-drop-circle",
+    "ico_blast": "mdi:weather-windy",
+    "ico_io": "mdi:power",
+    "ico_minus": "mdi:minus",
+    "ico_night_light": "mdi:weather-night",
+    "ico_off": "mdi:toggle-switch-off-outline",
+    "ico_on": "mdi:toggle-switch",
+    "ico_plus": "mdi:plus",
+}
+
+
 class NatureUpdateCoordinator(DataUpdateCoordinator[dict[str, dict]]):
     _next_update: datetime = None
 
