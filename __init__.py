@@ -14,8 +14,8 @@ from .common import DOMAIN, RESOURCE, AppliancesUpdateCoordinator, NatureUpdateC
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor", "climate", "binary_sensor",
-             "remote", "media_player", "button"]
+PLATFORMS = ["binary_sensor", "button", "climate",
+             "media_player", "number", "remote", "sensor"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
