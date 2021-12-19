@@ -5,7 +5,7 @@ from homeassistant.config_entries import ConfigEntry
 
 from homeassistant.components.remote import SUPPORT_ACTIVITY, SUPPORT_DELETE_COMMAND, RemoteEntity
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from .common import DOMAIN, AppliancesUpdateCoordinator, NatureEntity, check_update, create_appliance_device_info
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,6 +31,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 class NatureRemoIR(NatureEntity, RemoteEntity):
     _attr_assumed_state = True
+    _attr_entity_category = EntityCategory.CONFIG
     _attr_is_on = None
     _attr_supported_features = SUPPORT_DELETE_COMMAND
     _aptype = None

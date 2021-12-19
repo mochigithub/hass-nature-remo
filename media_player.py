@@ -3,7 +3,7 @@ from typing import Callable
 from homeassistant.components.media_player.const import SUPPORT_NEXT_TRACK, SUPPORT_PAUSE, SUPPORT_PLAY, SUPPORT_PREVIOUS_TRACK, SUPPORT_SELECT_SOURCE, SUPPORT_STOP, SUPPORT_TURN_OFF, SUPPORT_TURN_ON, SUPPORT_VOLUME_MUTE, SUPPORT_VOLUME_STEP
 from homeassistant.config_entries import ConfigEntry
 
-from homeassistant.components.media_player import DEVICE_CLASS_TV, MediaPlayerEntity
+from homeassistant.components.media_player import MediaPlayerDeviceClass, MediaPlayerEntity
 from homeassistant.const import STATE_IDLE, STATE_OFF, STATE_PAUSED, STATE_PLAYING
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
@@ -34,7 +34,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 class NatureRemoTV(NatureEntity, MediaPlayerEntity):
     _attr_assumed_state = True
-    _attr_device_class = DEVICE_CLASS_TV
+    _attr_device_class = MediaPlayerDeviceClass.TV
     _attr_state = STATE_OFF
 
     def __init__(self, appliances: AppliancesUpdateCoordinator, post: Callable, appliance: dict, device_info: DeviceInfo):

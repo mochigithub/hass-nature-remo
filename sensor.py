@@ -6,21 +6,15 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpdateCoordinator
 
 from homeassistant.const import (
-    DEVICE_CLASS_HUMIDITY,
-    DEVICE_CLASS_ILLUMINANCE,
-    DEVICE_CLASS_TEMPERATURE,
     ENERGY_KILO_WATT_HOUR,
-    ENTITY_CATEGORY_DIAGNOSTIC,
     LIGHT_LUX,
     PERCENTAGE,
     POWER_WATT,
-    DEVICE_CLASS_POWER,
-    DEVICE_CLASS_ENERGY,
     TEMP_CELSIUS,
 )
-from homeassistant.components.sensor import STATE_CLASS_MEASUREMENT, STATE_CLASS_TOTAL_INCREASING, SensorEntity
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 
 from .common import DOMAIN, AppliancesUpdateCoordinator, NatureEntity, NatureUpdateCoordinator, RemoSensorEntity, check_update, create_appliance_device_info, create_device_device_info, modify_utc_z
 
@@ -49,11 +43,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         device_info = create_device_device_info(device)
         newest_events = device['newest_events']
         if 'te' in newest_events:
-            yield RemoSensorValEntity(devices, device, device_info, 'te', DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS)
+            yield RemoSensorValEntity(devices, device, device_info, 'te', SensorDeviceClass.TEMPERATURE, TEMP_CELSIUS)
         if 'hu' in newest_events:
-            yield RemoSensorValEntity(devices, device, device_info, 'hu', DEVICE_CLASS_HUMIDITY, PERCENTAGE)
+            yield RemoSensorValEntity(devices, device, device_info, 'hu', SensorDeviceClass.HUMIDITY, PERCENTAGE)
         if 'il' in newest_events:
-            yield RemoSensorValEntity(devices, device, device_info, 'il', DEVICE_CLASS_ILLUMINANCE, LIGHT_LUX)
+            yield RemoSensorValEntity(devices, device, device_info, 'il', SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
 
     def on_add_appliances(appliance):
         if appliance["type"] != "EL_SMART_METER":
@@ -70,11 +64,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 
 class RateLimitEntity(CoordinatorEntity, SensorEntity):
-    _attr_entity_category = ENTITY_CATEGORY_DIAGNOSTIC
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:api"
     _attr_name = "Nature Remo Rate Limit"
-    _attr_state_class = STATE_CLASS_MEASUREMENT
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_unique_id = "rate-limit-remaining"
 
     def __init__(self, coordinator: DataUpdateCoordinator):
@@ -87,9 +81,9 @@ class RateLimitEntity(CoordinatorEntity, SensorEntity):
 
 
 class RemoSensorValEntity(RemoSensorEntity, SensorEntity):
-    _attr_state_class = STATE_CLASS_MEASUREMENT
+    _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, coordinator: NatureUpdateCoordinator, device: dict, device_info: DeviceInfo, key: str, device_class: str, unit_of_measurement: str):
+    def __init__(self, coordinator: NatureUpdateCoordinator, device: dict, device_info: DeviceInfo, key: str, device_class: SensorDeviceClass, unit_of_measurement: str):
         super().__init__(coordinator, device, device_info, key)
         self._attr_device_class = device_class
         self._attr_device_info = device_info
@@ -126,9 +120,9 @@ class SmartMeterEntity(NatureEntity, SensorEntity):
 class PowerEntity(SmartMeterEntity):
     """Implementation of a Nature Remo E sensor."""
 
-    _attr_device_class = DEVICE_CLASS_POWER
+    _attr_device_class = SensorDeviceClass.POWER.value
     _attr_native_unit_of_measurement = POWER_WATT
-    _attr_state_class = STATE_CLASS_MEASUREMENT
+    _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self, coordinator: AppliancesUpdateCoordinator, appliance: dict, device_info: DeviceInfo):
         super().__init__(coordinator, appliance, device_info, 231)
@@ -145,9 +139,10 @@ class PowerEntity(SmartMeterEntity):
 class EnergyEntity(SmartMeterEntity):
     """Implementation of a Nature Remo E sensor."""
 
-    _attr_device_class = DEVICE_CLASS_ENERGY
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_entity_category = EntityCategory.SYSTEM
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
     _attr_unit_of_measurement = ENERGY_KILO_WATT_HOUR
-    _attr_state_class = STATE_CLASS_TOTAL_INCREASING
 
     def __init__(self, coordinator: AppliancesUpdateCoordinator, appliance: dict, device_info: DeviceInfo, key: int):
         super().__init__(coordinator, appliance, device_info, key)

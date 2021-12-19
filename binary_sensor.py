@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import logging
 
-from homeassistant.components.binary_sensor import DEVICE_CLASS_MOTION, BinarySensorEntity
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
@@ -24,7 +24,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 
 class RemoMotionEntity(RemoSensorEntity, BinarySensorEntity):
-    _attr_device_class = DEVICE_CLASS_MOTION
+    _attr_device_class = BinarySensorDeviceClass.MOTION.value
 
     def __init__(self, coordinator: NatureUpdateCoordinator, device: dict, device_info: DeviceInfo):
         super().__init__(coordinator, device, device_info, "mo")
