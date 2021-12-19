@@ -27,7 +27,7 @@ Yet another [Home Assistant](https://www.home-assistant.io) component for [Natur
   - [x] Send IR command
   - [x] Delete IR command
 
-Tested on Home Assistant Core 2021.10.5 on Docker
+Tested on Home Assistant Core 2021.12.1 on Supervised
 
 ## Installation
 
@@ -53,7 +53,7 @@ Tested on Home Assistant Core 2021.10.5 on Docker
 If you have set up git, you can also install this component by adding submodule to your git repository.
 
 ```sh
-git submodule add https://github.com/yutoyazaki/hass-nature-remo.git {path_to_custom_component}/nature_remo
+git submodule add https://github.com/vwt12eh8/hass-nature-remo.git {path_to_custom_component}/nature_remo
 ```
 
 ## Configuration
