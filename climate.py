@@ -20,6 +20,7 @@ from homeassistant.components.climate.const import (
 from homeassistant.const import TEMP_CELSIUS, TEMP_FAHRENHEIT
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.event import async_call_later
+from homeassistant.helpers.restore_state import RestoreEntity
 
 from .common import DOMAIN, AppliancesUpdateCoordinator, NatureEntity, NatureUpdateCoordinator, check_update, create_appliance_device_info
 
@@ -53,6 +54,14 @@ TEMP_UNIT_REMO_TO_HA = {
     "f": TEMP_FAHRENHEIT,
 }
 
+DEFAULT_TEMP = {
+    HVAC_MODE_AUTO: 23,
+    HVAC_MODE_FAN_ONLY: 23,
+    HVAC_MODE_COOL: 23,
+    HVAC_MODE_DRY: 23,
+    HVAC_MODE_HEAT: 23,
+}
+
 
 async def async_setup_entry(hass, entry: ConfigEntry, async_add_entities):
     """Set up the Nature Remo AC."""
@@ -70,11 +79,11 @@ async def async_setup_entry(hass, entry: ConfigEntry, async_add_entities):
     check_update(entry, async_add_entities, appliances, on_add)
 
 
-class AirconEntity(NatureEntity, ClimateEntity):
+class AirconEntity(NatureEntity, ClimateEntity, RestoreEntity):
     """Implementation of a Nature Remo E sensor."""
 
     _attr_supported_features = SUPPORT_FLAGS
-    _last_target_temperature = {v: None for v in MODE_REMO_TO_HA}
+    _last_target_temperature = {}
     _next_settings = None
     _post_cancel = None
     _updated_at: str = None
@@ -86,19 +95,17 @@ class AirconEntity(NatureEntity, ClimateEntity):
         self.devices = devices
         self._device_id: str = appliance["device"]["id"]
         self._post = post
-        self._default_temp = {
-            HVAC_MODE_AUTO: 23,
-            HVAC_MODE_FAN_ONLY: 23,
-            HVAC_MODE_COOL: 23,
-            HVAC_MODE_DRY: 23,
-            HVAC_MODE_HEAT: 23,
-        }
         self._modes: dict = appliance["aircon"]["range"]["modes"]
         self._remo_mode = None
         self.async_on_remove(
             devices.async_add_listener(self._on_device_update))
         self._on_data_update(appliance)
         self._on_device_update()
+
+    async def async_added_to_hass(self) -> None:
+        state = await self.async_get_last_state()
+        if state is not None and state.attributes is not None:
+            self._last_target_temperature = state.attributes["previous_target_temperature"]
 
     @property
     def min_temp(self):
@@ -162,10 +169,10 @@ class AirconEntity(NatureEntity, ClimateEntity):
                 data["button"] = mode
             else:
                 data["operation_mode"] = mode
-                if self._last_target_temperature[mode]:
+                if self._last_target_temperature.get(mode):
                     data["temperature"] = self._last_target_temperature[mode]
-                elif self._default_temp.get(hvac_mode):
-                    data["temperature"] = self._default_temp[hvac_mode]
+                elif DEFAULT_TEMP.get(hvac_mode):
+                    data["temperature"] = DEFAULT_TEMP[hvac_mode]
 
         if temperature is not None:
             if temperature.is_integer():
