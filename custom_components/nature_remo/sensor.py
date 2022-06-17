@@ -140,9 +140,11 @@ class EnergyEntity(SmartMeterEntity):
     """Implementation of a Nature Remo E sensor."""
 
     _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_entity_category = EntityCategory.SYSTEM
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
-    _attr_unit_of_measurement = ENERGY_KILO_WATT_HOUR
+    _attr_native_unit_of_measurement = ENERGY_KILO_WATT_HOUR
+    # breaking changes on core side
+    # https://github.com/home-assistant/core/commit/1aaf78ef9944ded259298afbdbedcc07c90b80b0
+    # also _attr_[native]_unit_of_measurement
 
     def __init__(self, coordinator: AppliancesUpdateCoordinator, appliance: dict, device_info: DeviceInfo, key: int):
         super().__init__(coordinator, appliance, device_info, key)
