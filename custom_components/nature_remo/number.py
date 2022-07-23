@@ -1,3 +1,4 @@
+from html import entities
 import logging
 from typing import Callable
 
@@ -33,26 +34,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 
 class OffsetConfigEntity(NatureEntity, NumberEntity):
-    _attr_entity_category = EntityCategory.CONFIG
     _attr_mode = NumberMode.BOX
 
     def __init__(self, coordinator: NatureUpdateCoordinator, post: Callable, device: dict, key: str, range: float, step: float, device_info: DeviceInfo):
         super().__init__(coordinator,
                          device['id'], f"{device['id']}_{key}", device_info)
         self._attr_icon = _KEY_TO_ICON[key]
-        self._attr_max_value = range
-        self._attr_min_value = -range
+        self._attr_native_max_value = range
+        self._attr_native_min_value = -range
         self._attr_name = key
-        self._attr_step = step
+        self._attr_native_step = step
         self._key = key
         self._post = post
         self._on_data_update(device)
 
     def _on_data_update(self, device: dict):
         super()._on_data_update(device)
-        self._attr_value = device[self._key]
+        self._attr_native_value = device[self._key]
 
-    async def async_set_value(self, value: float) -> None:
+    async def async_set_native_value(self, value: float) -> None:
         await self._post(f"devices/{self._remo_id}/{self._key}", {"offset": value})
-        self._attr_value = value
+        self._attr_native_value = value
         self.async_write_ha_state()
