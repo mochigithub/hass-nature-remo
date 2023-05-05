@@ -85,7 +85,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         if (id is not None) and (id not in devices.data.keys()) and (id not in appliances.data.keys()):
             dr.async_remove_device(d.id)
 
-    hass.config_entries.async_setup_platforms(entry, PLATFORMS)
+    # hass.config_entries.async_setup_platforms(entry, PLATFORMS)
+    await hass.config_entries.async_forward_entry_setups(entry,PLATFORMS)
     return True
 
 
