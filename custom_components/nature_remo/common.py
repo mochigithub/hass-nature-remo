@@ -189,8 +189,8 @@ def create_appliance_device_info(appliance: dict):
     )
     model = appliance["model"]
     if model is not None:
-        info["default_manufacturer"] = appliance["model"]["manufacturer"]
-        info["default_model"] = appliance["model"]["name"]
+        info["manufacturer"] = appliance["model"]["manufacturer"]
+        info["model"] = appliance["model"]["name"]
     return info
 
 
