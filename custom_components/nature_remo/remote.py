@@ -3,7 +3,7 @@ import logging
 from typing import Callable, Iterable
 from homeassistant.config_entries import ConfigEntry
 
-from homeassistant.components.remote import SUPPORT_ACTIVITY, SUPPORT_DELETE_COMMAND, RemoteEntity
+from homeassistant.components.remote import RemoteEntity,RemoteEntityFeature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from .common import DOMAIN, AppliancesUpdateCoordinator, NatureEntity, check_update, create_appliance_device_info
@@ -19,7 +19,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     _LOGGER.debug("Setting up remote platform.")
     appliances: AppliancesUpdateCoordinator = hass.data[DOMAIN]["appliances"]
     post: Callable = hass.data[DOMAIN]["post"]
-
     def on_add(appliance: dict):
         if appliance["type"] != "IR" and appliance["type"] != "LIGHT" and appliance["type"] != "TV":
             return
@@ -33,7 +32,7 @@ class NatureRemoIR(NatureEntity, RemoteEntity):
     _attr_assumed_state = True
     _attr_entity_category = EntityCategory.CONFIG
     _attr_is_on = None
-    _attr_supported_features = SUPPORT_DELETE_COMMAND
+    _attr_supported_features = RemoteEntityFeature.DELETE_COMMAND
     _aptype = None
 
     def __init__(self, appliances: AppliancesUpdateCoordinator, post: Callable, appliance: dict, device_info: DeviceInfo):
@@ -43,7 +42,7 @@ class NatureRemoIR(NatureEntity, RemoteEntity):
         self._post = post
         if appliance["type"] == "LIGHT":
             self._aptype = "light"
-            self._attr_supported_features |= SUPPORT_ACTIVITY
+            self._attr_supported_features |= RemoteEntityFeature.ACTIVITY
             self._attr_icon = "hass:lightbulb"
         elif appliance["type"] == "TV":
             self._aptype = "tv"

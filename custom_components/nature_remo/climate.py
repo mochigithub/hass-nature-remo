@@ -17,10 +17,12 @@ from homeassistant.components.climate.const import (
     SUPPORT_SWING_MODE,
     SUPPORT_TARGET_TEMPERATURE,
 )
-from homeassistant.const import TEMP_CELSIUS, TEMP_FAHRENHEIT
+# from homeassistant.const import TEMP_CELSIUS, TEMP_FAHRENHEIT
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.restore_state import RestoreEntity
+
+from homeassistant.const import UnitOfTemperature
 
 from .common import DOMAIN, AppliancesUpdateCoordinator, NatureEntity, NatureUpdateCoordinator, check_update, create_appliance_device_info
 
@@ -50,8 +52,8 @@ MODE_REMO_TO_HA = {
 }
 
 TEMP_UNIT_REMO_TO_HA = {
-    "c": TEMP_CELSIUS,
-    "f": TEMP_FAHRENHEIT,
+    "c": UnitOfTemperature.CELSIUS,
+    "f": UnitOfTemperature.FAHRENHEIT,
 }
 
 DEFAULT_TEMP = {

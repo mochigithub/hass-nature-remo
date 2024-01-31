@@ -6,11 +6,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpdateCoordinator
 
 from homeassistant.const import (
-    ENERGY_KILO_WATT_HOUR,
     LIGHT_LUX,
     PERCENTAGE,
-    POWER_WATT,
-    TEMP_CELSIUS,
+    UnitOfPower,
+    UnitOfTemperature,
+    UnitOfEnergy
 )
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.core import HomeAssistant
@@ -43,7 +43,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         device_info = create_device_device_info(device)
         newest_events = device['newest_events']
         if 'te' in newest_events:
-            yield RemoSensorValEntity(devices, device, device_info, 'te', SensorDeviceClass.TEMPERATURE, TEMP_CELSIUS)
+            yield RemoSensorValEntity(devices, device, device_info, 'te', SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS)
         if 'hu' in newest_events:
             yield RemoSensorValEntity(devices, device, device_info, 'hu', SensorDeviceClass.HUMIDITY, PERCENTAGE)
         if 'il' in newest_events:
@@ -121,7 +121,7 @@ class PowerEntity(SmartMeterEntity):
     """Implementation of a Nature Remo E sensor."""
 
     _attr_device_class = SensorDeviceClass.POWER.value
-    _attr_native_unit_of_measurement = POWER_WATT
+    _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self, coordinator: AppliancesUpdateCoordinator, appliance: dict, device_info: DeviceInfo):
@@ -141,7 +141,7 @@ class EnergyEntity(SmartMeterEntity):
 
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
-    _attr_native_unit_of_measurement = ENERGY_KILO_WATT_HOUR
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     # breaking changes on core side
     # https://github.com/home-assistant/core/commit/1aaf78ef9944ded259298afbdbedcc07c90b80b0
     # also _attr_[native]_unit_of_measurement
