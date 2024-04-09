@@ -108,7 +108,7 @@ class NatureUpdateCoordinator(DataUpdateCoordinator[dict[str, dict]]):
         # as long as the update process takes less than a second
         self._unsub_refresh = event.async_track_point_in_utc_time(
             self.hass,
-            self._job,
+            self._handle_refresh_interval,
             time,
         )
 
