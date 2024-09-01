@@ -2,8 +2,8 @@
   "domain": "nature_remo",
   "name": "Nature Remo",
   "version": "0.64",
-  "documentation": "https://github.com/vwt12eh8/hass-nature-remo",
-  "issue_tracker": "https://github.com/vwt12eh8/hass-nature-remo/issues",
+  "documentation": "https://github.com/mochigithub/hass-nature-remo",
+  "issue_tracker": "https://github.com/mochigithub/hass-nature-remo/issues",
   "codeowners": [
     "@yutoyazaki",
     "@vwt12eh8",
