@@ -5,8 +5,6 @@
   "documentation": "https://github.com/mochigithub/hass-nature-remo",
   "issue_tracker": "https://github.com/mochigithub/hass-nature-remo/issues",
   "codeowners": [
-    "@yutoyazaki",
-    "@vwt12eh8",
-    "@dustinhu93"
+    "@mochigithub"
   ]
 }
