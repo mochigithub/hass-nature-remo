@@ -6,18 +6,7 @@ from typing import Callable
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
 from homeassistant.components.climate import ClimateEntity
-from homeassistant.components.climate.const import (
-    HVAC_MODE_AUTO,
-    HVAC_MODE_COOL,
-    HVAC_MODE_DRY,
-    HVAC_MODE_FAN_ONLY,
-    HVAC_MODE_HEAT,
-    HVAC_MODE_OFF,
-    SUPPORT_FAN_MODE,
-    SUPPORT_SWING_MODE,
-    SUPPORT_TARGET_TEMPERATURE,
-)
-# from homeassistant.const import TEMP_CELSIUS, TEMP_FAHRENHEIT
+from homeassistant.components.climate.const import HVACMode ,ClimateEntityFeature
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.restore_state import RestoreEntity
@@ -31,24 +20,24 @@ _LOGGER = logging.getLogger(__name__)
 DEFAULT_COOL_TEMP = 28
 DEFAULT_HEAT_TEMP = 20
 
-SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_FAN_MODE | SUPPORT_SWING_MODE
+SUPPORT_FLAGS = ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.SWING_MODE
 
 MODE_HA_TO_REMO = {
-    HVAC_MODE_AUTO: "auto",
-    HVAC_MODE_FAN_ONLY: "blow",
-    HVAC_MODE_COOL: "cool",
-    HVAC_MODE_DRY: "dry",
-    HVAC_MODE_HEAT: "warm",
-    HVAC_MODE_OFF: "power-off",
+    HVACMode.AUTO: "auto",
+    HVACMode.FAN_ONLY: "blow",
+    HVACMode.COOL: "cool",
+    HVACMode.DRY: "dry",
+    HVACMode.HEAT: "warm",
+    HVACMode.OFF: "power-off",
 }
 
 MODE_REMO_TO_HA = {
-    "auto": HVAC_MODE_AUTO,
-    "blow": HVAC_MODE_FAN_ONLY,
-    "cool": HVAC_MODE_COOL,
-    "dry": HVAC_MODE_DRY,
-    "warm": HVAC_MODE_HEAT,
-    "power-off": HVAC_MODE_OFF,
+    "auto": HVACMode.AUTO,
+    "blow": HVACMode.FAN_ONLY,
+    "cool": HVACMode.COOL,
+    "dry": HVACMode.DRY,
+    "warm": HVACMode.HEAT,
+    "power-off": HVACMode.OFF,
 }
 
 TEMP_UNIT_REMO_TO_HA = {
@@ -57,11 +46,11 @@ TEMP_UNIT_REMO_TO_HA = {
 }
 
 DEFAULT_TEMP = {
-    HVAC_MODE_AUTO: 23,
-    HVAC_MODE_FAN_ONLY: 23,
-    HVAC_MODE_COOL: 23,
-    HVAC_MODE_DRY: 23,
-    HVAC_MODE_HEAT: 23,
+    HVACMode.AUTO: 23,
+    HVACMode.FAN_ONLY: 23,
+    HVACMode.COOL: 23,
+    HVACMode.DRY: 23,
+    HVACMode.HEAT: 23,
 }
 
 
@@ -141,7 +130,7 @@ class AirconEntity(NatureEntity, ClimateEntity, RestoreEntity):
         """Return the list of available operation modes."""
         remo_modes = list(self._modes.keys())
         ha_modes = list(map(lambda mode: MODE_REMO_TO_HA[mode], remo_modes))
-        ha_modes.append(HVAC_MODE_OFF)
+        ha_modes.append(HVACMode.OFF)
         return ha_modes
 
     @property
@@ -167,7 +156,7 @@ class AirconEntity(NatureEntity, ClimateEntity, RestoreEntity):
         if hvac_mode is not None:
             _LOGGER.debug("Set hvac mode: %s", hvac_mode)
             mode = MODE_HA_TO_REMO[hvac_mode]
-            if mode == MODE_HA_TO_REMO[HVAC_MODE_OFF]:
+            if mode == MODE_HA_TO_REMO[HVACMode.OFF]:
                 data["button"] = mode
             else:
                 data["operation_mode"] = mode
@@ -210,8 +199,8 @@ class AirconEntity(NatureEntity, ClimateEntity, RestoreEntity):
         except:
             self._attr_target_temperature = None
 
-        if ac_settings["button"] == MODE_HA_TO_REMO[HVAC_MODE_OFF]:
-            self._attr_hvac_mode = HVAC_MODE_OFF
+        if ac_settings["button"] == MODE_HA_TO_REMO[HVACMode.OFF]:
+            self._attr_hvac_mode = HVACMode.OFF
         else:
             self._attr_hvac_mode = MODE_REMO_TO_HA[self._remo_mode]
 
